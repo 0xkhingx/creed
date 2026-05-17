@@ -23,16 +23,20 @@ app.get("/api/fees/:mint", async (req, res) => {
   try {
     const pubkey = new PublicKey(req.params.mint);
     const lifetimeFees = await sdk.state.getTokenLifetimeFees(pubkey);
-    const claimStats = await sdk.state.getTokenClaimStats(pubkey);
+    const events = await sdk.state.getTokenClaimEvents(pubkey);
+    const totalClaimed = events.reduce(
+      (sum: number, e: any) => sum + e.amount,
+      0
+    );
 
     res.json({
       mint: req.params.mint,
       lifetimeFees: lifetimeFees / 1e9,
-      claimableFees: claimStats,
+      totalClaimed: totalClaimed / 1e9,
     });
   } catch (err: any) {
     console.error("Full error:", err);
-    res.status(500).json({ error: err.message, details: err.toString() });
+    res.status(500).json({ error: err.message });
   }
 });
 

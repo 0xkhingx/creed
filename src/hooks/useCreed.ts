@@ -10,29 +10,38 @@ export function useCreed() {
   const [error, setError] = useState<string | null>(null);
 
   async function analyze(mint: string) {
-    setLoading(true);
-    setError(null);
+  setLoading(true);
+  setError(null);
 
-    try {
-      const creatorData = await getCreatorFees(mint);
-      const events = await getClaimEvents(mint);
+  try {
+    const creatorData = await getCreatorFees(mint);
+    const events = await getClaimEvents(mint);
+    const holderEvents = events.filter((e) => !e.isCreator);
 
-      const holderEvents = events.filter((e) => !e.isCreator);
-
-      const signal = await analyzeHolders(
-        holderEvents,
-        creatorData.lifetimeFees,
-        creatorData.claimableFees
-      );
-
+    if (holderEvents.length === 0) {
       setCreator(creatorData);
-      setSignal(signal);
-    } catch (err: any) {
-      setError(err.message || "Something went wrong");
-    } finally {
-      setLoading(false);
+      setSignal({
+        loyaltyScores: [],
+        recommendedDistribution: 0,
+        insight: "No holder claim events found yet. Share your token to grow your Pack.",
+        action: "boost",
+      });
+      return;
     }
-  }
 
+    const signal = await analyzeHolders(
+      holderEvents,
+      creatorData.lifetimeFees,
+      creatorData.claimableFees
+    );
+
+    setCreator(creatorData);
+    setSignal(signal);
+  } catch (err: any) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setLoading(false);
+  }
+}
   return { creator, signal, loading, error, analyze };
 }
