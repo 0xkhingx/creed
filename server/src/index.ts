@@ -59,10 +59,16 @@ app.get("/api/events/:mint", async (req, res) => {
   }
 });
 
-
+// Analyze holders with Groq
 app.post("/api/analyze", async (req, res) => {
   try {
     const { events, lifetimeFees, claimableFees } = req.body;
+
+    console.log("Analyze called with:", {
+      eventCount: events.length,
+      lifetimeFees,
+      claimableFees,
+    });
 
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
@@ -73,7 +79,7 @@ app.post("/api/analyze", async (req, res) => {
           Authorization: `Bearer ${process.env.VITE_GROQ_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "llama3-8b-8192",
+          model: "llama-3.3-70b-versatile",
           messages: [
             {
               role: "system",
@@ -105,15 +111,21 @@ loyaltyScore is 0-100. recommendedDistribution is the % of claimable fees to dis
       }
     );
 
+    console.log("Groq response status:", response.status);
     const data = await response.json();
-    const text = data.choices[0].message.content;
+    console.log("Groq response:", JSON.stringify(data).slice(0, 200));
+
+    const text = data.choices[0].message.content
+      .replace(/```json\n?/g, "")
+      .replace(/```\n?/g, "")
+      .trim();
+
     res.json(JSON.parse(text));
   } catch (err: any) {
     console.error("Analyze error:", err);
     res.status(500).json({ error: err.message });
   }
 });
-
 
 const PORT = 3001;
 app.listen(PORT, () => {
