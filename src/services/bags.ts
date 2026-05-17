@@ -1,6 +1,6 @@
 import { BagsSDK } from "@bagsfm/bags-sdk";
 import { Connection, PublicKey } from "@solana/web3.js";
-import { Creator, ClaimEvent } from "../types";
+import type { Creator, ClaimEvent } from "../types";
 
 const connection = new Connection(import.meta.env.VITE_SOLANA_RPC_URL);
 const sdk = new BagsSDK(import.meta.env.VITE_BAGS_API_KEY, connection, "processed");
