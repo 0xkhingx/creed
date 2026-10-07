@@ -1,73 +1,46 @@
-# React + TypeScript + Vite
+# Creed — a two-sided intelligence layer for Bags creators and holders
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Creators see real-time fee earnings and holder loyalty scores. Holders form **Packs** around creators they believe in and earn proportionally when the token grows. Groq reasons in the middle.
 
-Currently, two official plugins are available:
+## How it works
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Creator side:** enter a token mint → the server reads on-chain lifetime fees and claim events via the Bags SDK and returns earnings.
+- **Holder side:** the dashboard renders fee analysis skeletons, loyalty scores, and Pack formation around creators.
+- **AI layer:** Groq analysis runs **server-side** (`src/services/groq.ts` via `server/`) so API keys never reach the browser.
 
-## React Compiler
+## Repo layout
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Dir | Stack | Contents |
+|---|---|---|
+| `server/` | Express + TypeScript | Bags SDK + Solana connection, `/api/fees/:mint` and analysis routes (`server/src/index.ts`) |
+| `src/` | React 19 + Vite + Tailwind | Dashboard page (`src/pages/dashboard.tsx`), Bags + Groq clients (`src/services/bags.ts`, `groq.ts`), hooks, types |
 
-## Expanding the ESLint configuration
+## Run it locally
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Requires Node 20+. You need a Solana RPC URL, a Bags API key, and a Groq API key in a root `.env` (see `.env.example`):
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+```bash
+# terminal 1 — API server
+cd server && npm ci && npm run dev
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# terminal 2 — dashboard (http://localhost:5173)
+npm ci && npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build    # tsc + vite build
+npm run lint     # eslint .
 ```
+
+## API sketch
+
+- `GET /api/fees/:mint` → `{ mint, lifetimeFees, totalClaimed }` (lamports → SOL)
+- Analysis routes wrap Groq so keys stay server-side.
+
+## Status
+
+Working pipeline (real on-chain data → Groq analysis → loyalty scores), pre-deployment. No live URL yet.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
